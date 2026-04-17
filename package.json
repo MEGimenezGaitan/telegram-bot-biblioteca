@@ -1,0 +1,26 @@
+{
+  "name": "telegram-bot-biblioteca",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MEGimenezGaitan/telegram-bot-biblioteca.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/MEGimenezGaitan/telegram-bot-biblioteca/issues"
+  },
+  "homepage": "https://github.com/MEGimenezGaitan/telegram-bot-biblioteca#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "node-telegram-bot-api": "^0.67.0",
+    "sqlite3": "^6.0.1"
+  }
+}
