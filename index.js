@@ -64,7 +64,7 @@ bot.onText(/\/buscar (.+)/, (msg, match) => {
 
     db.all(
         "SELECT * FROM books WHERE titulo LIKE ? COLLATE NOCASE LIMIT 10",
-        [`%${query}%`],
+        [`${query}%`],
         (err, rows) => {
 
             if (err) {
@@ -73,8 +73,34 @@ bot.onText(/\/buscar (.+)/, (msg, match) => {
                 return;
             }
 
+            // Si no encuentra al inicio
             if (!rows || rows.length === 0) {
-                bot.sendMessage(chatId, "❌ No encontrado");
+
+                db.all(
+                    "SELECT * FROM books WHERE titulo LIKE ? COLLATE NOCASE LIMIT 10",
+                    [`%${query}%`],
+                    (err, rows2) => {
+
+                        if (!rows2 || rows2.length === 0) {
+                            bot.sendMessage(chatId, "❌ No encontrado");
+                            return;
+                        }
+
+                        rows2.forEach(row => {
+
+                            bot.sendMessage(chatId, `📚 ${row.titulo}`, {
+                                reply_markup: {
+                                    inline_keyboard: [
+                                        [{ text: "📖 Preview", callback_data: `preview_${row.id}` }],
+                                        [{ text: "🔓 Completo", callback_data: `full_${row.id}` }]
+                                    ]
+                                }
+                            });
+
+                        });
+                    }
+                );
+
                 return;
             }
 
