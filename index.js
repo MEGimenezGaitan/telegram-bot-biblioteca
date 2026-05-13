@@ -62,10 +62,10 @@ bot.onText(/\/buscar (.+)/, (msg, match) => {
     const chatId = msg.chat.id;
     const query = match[1];
 
-    db.get(
-        "SELECT * FROM books WHERE titulo LIKE ?",
+    db.all(
+        "SELECT * FROM books WHERE titulo LIKE ? COLLATE NOCASE LIMIT 10",
         [`%${query}%`],
-        (err, row) => {
+        (err, rows) => {
 
             if (err) {
                 console.log(err);
@@ -73,18 +73,22 @@ bot.onText(/\/buscar (.+)/, (msg, match) => {
                 return;
             }
 
-            if (!row) {
+            if (!rows || rows.length === 0) {
                 bot.sendMessage(chatId, "❌ No encontrado");
                 return;
             }
 
-            bot.sendMessage(chatId, `📚 ${row.titulo}`, {
-                reply_markup: {
-                    inline_keyboard: [
-                        [{ text: "📖 Preview", callback_data: `preview_${row.id}` }],
-                        [{ text: "🔓 Completo", callback_data: `full_${row.id}` }]
-                    ]
-                }
+            rows.forEach(row => {
+
+                bot.sendMessage(chatId, `📚 ${row.titulo}`, {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: "📖 Preview", callback_data: `preview_${row.id}` }],
+                            [{ text: "🔓 Completo", callback_data: `full_${row.id}` }]
+                        ]
+                    }
+                });
+
             });
         }
     );
