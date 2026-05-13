@@ -94,7 +94,9 @@ bot.on("callback_query", (query) => {
                 return;
             }
 
-            bot.sendDocument(chatId, row.preview);
+            bot.sendDocument(chatId, {
+                source: row.preview
+            });
         });
     }
 
@@ -118,7 +120,9 @@ bot.on("callback_query", (query) => {
                         return;
                     }
 
-                    bot.sendDocument(chatId, row.archivo);
+                    bot.sendDocument(chatId, {
+                        source: row.archivo
+                    });
                 });
             }
         );
