@@ -31,6 +31,7 @@ db.serialize(() => {
 
 // /start
 bot.onText(/\/start/, (msg) => {
+
     const chatId = msg.chat.id;
 
     db.run(
@@ -38,17 +39,23 @@ bot.onText(/\/start/, (msg) => {
         [chatId]
     );
 
-    bot.sendMessage(chatId, `
-    📚 Bienvenido a Biblioteca Bot
+    bot.sendMessage(
+        chatId,
+        `📚 Bienvenido a Biblioteca Bot
 
-    Usá:
-
-    🔎 /buscar nombre_del_libro
-    📚 /catalogo
-    💎 /premium
-        `);
-    }
-);
+Elegí una opción:`,
+        {
+            reply_markup: {
+                keyboard: [
+                    ['🔎 Buscar'],
+                    ['📚 Catalogo'],
+                    ['💎 Premium']
+                ],
+                resize_keyboard: true
+            }
+        }
+    );
+});
 
 // 🔎 BUSCAR LIBRO
 bot.onText(/\/buscar (.+)/, (msg, match) => {
@@ -202,4 +209,26 @@ bot.onText(/\/catalogo/, (msg) => {
             inline_keyboard: keyboard
         }
     });
+});
+
+// 🎹 BOTONES DEL TECLADO
+bot.on('message', (msg) => {
+
+    const chatId = msg.chat.id;
+    const text = msg.text;
+
+    if (text === '📚 Catalogo') {
+        bot.sendMessage(chatId, '/catalogo');
+    }
+
+    if (text === '💎 Premium') {
+        bot.sendMessage(chatId, '/premium');
+    }
+
+    if (text === '🔎 Buscar') {
+        bot.sendMessage(
+            chatId,
+            'Usá:\n/buscar nombre_del_libro'
+        );
+    }
 });
