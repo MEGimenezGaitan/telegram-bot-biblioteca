@@ -1,6 +1,7 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
 
 // Inicializar bot
 const bot = new TelegramBot(process.env.TOKEN, { polling: true });
@@ -94,9 +95,10 @@ bot.on("callback_query", (query) => {
                 return;
             }
 
-            bot.sendDocument(chatId, {
-                source: row.preview
-            });
+            bot.sendDocument(
+                chatId, 
+                fs.createReadStream(row.preview)
+            );;
         });
     }
 
@@ -120,9 +122,10 @@ bot.on("callback_query", (query) => {
                         return;
                     }
 
-                    bot.sendDocument(chatId, {
-                        source: row.archivo
-                    });
+                    bot.sendDocument(
+                        chatId,
+                    fs.createReadStream(row.archivo)
+                    );
                 });
             }
         );

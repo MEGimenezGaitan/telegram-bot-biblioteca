@@ -33,7 +33,7 @@ fs.readdir(booksDir, (err, files) => {
         const archivo = `${booksDir}/${file}`;
 
         // Por ahora usamos mismo archivo como preview
-        const preview = `${booksDir}/${file}`;
+        const preview = `./previews/${file}`;
 
         // Verificar duplicados
         db.get(
