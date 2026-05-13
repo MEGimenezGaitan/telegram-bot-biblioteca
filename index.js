@@ -39,13 +39,16 @@ bot.onText(/\/start/, (msg) => {
     );
 
     bot.sendMessage(chatId, `
-📚 Bienvenido a Biblioteca Bot
+    📚 Bienvenido a Biblioteca Bot
 
-Usá:
-/buscar nombre_del_libro
-/premium
-    `);
-});
+    Usá:
+
+    🔎 /buscar nombre_del_libro
+    📚 /catalogo
+    💎 /premium
+        `);
+    }
+);
 
 // 🔎 BUSCAR LIBRO
 bot.onText(/\/buscar (.+)/, (msg, match) => {
