@@ -85,6 +85,32 @@ bot.on("callback_query", (query) => {
     const chatId = query.message.chat.id;
     const data = query.data;
 
+    // 📚 LISTAR LIBROS POR LETRA
+    if (data.startsWith("catalogo_")) {
+
+        const letra = data.split("_")[1];
+
+        db.all(
+            "SELECT titulo FROM books WHERE titulo LIKE ? ORDER BY titulo ASC LIMIT 20",
+            [`${letra}%`],
+            (err, rows) => {
+
+                if (!rows || rows.length === 0) {
+                    bot.sendMessage(chatId, `❌ No hay libros con ${letra}`);
+                    return;
+                }
+
+                let mensaje = `📚 Libros con ${letra}\n\n`;
+
+                rows.forEach(book => {
+                    mensaje += `• ${book.titulo}\n`;
+                });
+
+                bot.sendMessage(chatId, mensaje);
+            }
+        );
+    }
+
     // 📖 PREVIEW
     if (data.startsWith("preview_")) {
         const id = data.split("_")[1];
@@ -145,4 +171,32 @@ bot.onText(/\/premium/, (msg) => {
 
 👉 Escribime para activarlo
     `);
+});
+
+// 📚 CATALOGO
+bot.onText(/\/catalogo/, (msg) => {
+
+    const chatId = msg.chat.id;
+
+    const letras = [
+        ['A', 'B', 'C', 'D', 'E'],
+        ['F', 'G', 'H', 'I', 'J'],
+        ['K', 'L', 'M', 'N', 'O'],
+        ['P', 'Q', 'R', 'S', 'T'],
+        ['U', 'V', 'W', 'X', 'Y'],
+        ['Z']
+    ];
+
+    const keyboard = letras.map(fila =>
+        fila.map(letra => ({
+            text: letra,
+            callback_data: `catalogo_${letra}`
+        }))
+    );
+
+    bot.sendMessage(chatId, '📚 Seleccioná una letra:', {
+        reply_markup: {
+            inline_keyboard: keyboard
+        }
+    });
 });
