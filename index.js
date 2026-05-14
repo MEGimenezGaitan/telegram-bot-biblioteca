@@ -48,10 +48,9 @@ bot.onText(/\/start/, (msg) => {
 
     const chatId = msg.chat.id;
 
-    db.run(
-        "INSERT OR IGNORE INTO users (telegram_id) VALUES (?)",
-        [chatId]
-    );
+    db.prepare(
+        "INSERT OR IGNORE INTO users (telegram_id) VALUES (?)"
+    ).run(chatId);;
 
     bot.sendMessage(
         chatId,
