@@ -1,33 +1,31 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const fs = require('fs');
 
 // Inicializar bot
 const bot = new TelegramBot(process.env.TOKEN, { polling: true });
 
 // Base de datos
-const db = new sqlite3.Database('./db/database.db');
+const db = new Database('./db/database.db');
 
 // Crear tablas
-db.serialize(() => {
-    db.run(`
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            telegram_id TEXT UNIQUE,
-            premium INTEGER DEFAULT 0
-        )
-    `);
+db.prepare(`
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        telegram_id TEXT UNIQUE,
+        premium INTEGER DEFAULT 0
+    )
+`).run();
 
-    db.run(`
-        CREATE TABLE IF NOT EXISTS books (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            titulo TEXT,
-            archivo TEXT,
-            preview TEXT
-        )
-    `);
-});
+db.prepare(`
+    CREATE TABLE IF NOT EXISTS books (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        titulo TEXT,
+        archivo TEXT,
+        preview TEXT
+    )
+`).run();
 
 // /start
 bot.onText(/\/start/, (msg) => {
