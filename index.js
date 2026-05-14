@@ -50,7 +50,7 @@ bot.onText(/\/start/, (msg) => {
 
     db.prepare(
         "INSERT OR IGNORE INTO users (telegram_id) VALUES (?)"
-    ).run(chatId);;
+    ).run(chatId);
 
     bot.sendMessage(
         chatId,
@@ -72,69 +72,44 @@ Elegí una opción:`,
 
 // 🔎 BUSCAR LIBRO
 bot.onText(/\/buscar (.+)/, (msg, match) => {
+
     const chatId = msg.chat.id;
     const query = match[1];
 
-    db.all(
-        "SELECT * FROM books WHERE titulo LIKE ? COLLATE NOCASE LIMIT 10",
-        [`${query}%`],
-        (err, rows) => {
+    let rows = db.prepare(
+        "SELECT * FROM books WHERE titulo LIKE ? COLLATE NOCASE LIMIT 10"
+    ).all(`${query}%`);
 
-            if (err) {
-                console.log(err);
-                bot.sendMessage(chatId, "❌ Error en búsqueda");
-                return;
+    // Si no encuentra al inicio
+    if (!rows || rows.length === 0) {
+
+        rows = db.prepare(
+            "SELECT * FROM books WHERE titulo LIKE ? COLLATE NOCASE LIMIT 10"
+        ).all(`%${query}%`);
+    }
+
+    if (!rows || rows.length === 0) {
+        bot.sendMessage(chatId, "❌ No encontrado");
+        return;
+    }
+
+    rows.forEach(row => {
+
+        bot.sendMessage(chatId, `📚 ${row.titulo}`, {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "📖 Preview", callback_data: `preview_${row.id}` }],
+                    [{ text: "🔓 Completo", callback_data: `full_${row.id}` }]
+                ]
             }
+        });
 
-            // Si no encuentra al inicio
-            if (!rows || rows.length === 0) {
-
-                db.all(
-                    "SELECT * FROM books WHERE titulo LIKE ? COLLATE NOCASE LIMIT 10",
-                    [`%${query}%`],
-                    (err, rows2) => {
-
-                        if (!rows2 || rows2.length === 0) {
-                            bot.sendMessage(chatId, "❌ No encontrado");
-                            return;
-                        }
-
-                        rows2.forEach(row => {
-
-                            bot.sendMessage(chatId, `📚 ${row.titulo}`, {
-                                reply_markup: {
-                                    inline_keyboard: [
-                                        [{ text: "📖 Preview", callback_data: `preview_${row.id}` }],
-                                        [{ text: "🔓 Completo", callback_data: `full_${row.id}` }]
-                                    ]
-                                }
-                            });
-
-                        });
-                    }
-                );
-
-                return;
-            }
-
-            rows.forEach(row => {
-
-                bot.sendMessage(chatId, `📚 ${row.titulo}`, {
-                    reply_markup: {
-                        inline_keyboard: [
-                            [{ text: "📖 Preview", callback_data: `preview_${row.id}` }],
-                            [{ text: "🔓 Completo", callback_data: `full_${row.id}` }]
-                        ]
-                    }
-                });
-
-            });
-        }
-    );
+    });
 });
 
-// 🎯 BOTONES (preview + completo)
+// 🎯 BOTONES
 bot.on("callback_query", (query) => {
+
     const chatId = query.message.chat.id;
     const data = query.data;
 
@@ -143,76 +118,77 @@ bot.on("callback_query", (query) => {
 
         const letra = data.split("_")[1];
 
-        db.all(
-            "SELECT titulo FROM books WHERE titulo LIKE ? ORDER BY titulo ASC LIMIT 20",
-            [`${letra}%`],
-            (err, rows) => {
+        const rows = db.prepare(
+            "SELECT titulo FROM books WHERE titulo LIKE ? ORDER BY titulo ASC LIMIT 20"
+        ).all(`${letra}%`);
 
-                if (!rows || rows.length === 0) {
-                    bot.sendMessage(chatId, `❌ No hay libros con ${letra}`);
-                    return;
-                }
+        if (!rows || rows.length === 0) {
+            bot.sendMessage(chatId, `❌ No hay libros con ${letra}`);
+            return;
+        }
 
-                let mensaje = `📚 Libros con ${letra}\n\n`;
+        let mensaje = `📚 Libros con ${letra}\n\n`;
 
-                rows.forEach(book => {
-                    mensaje += `• ${book.titulo}\n`;
-                });
+        rows.forEach(book => {
+            mensaje += `• ${book.titulo}\n`;
+        });
 
-                bot.sendMessage(chatId, mensaje);
-            }
-        );
+        bot.sendMessage(chatId, mensaje);
     }
 
     // 📖 PREVIEW
     if (data.startsWith("preview_")) {
+
         const id = data.split("_")[1];
 
-        db.get("SELECT * FROM books WHERE id = ?", [id], (err, row) => {
-            if (!row) {
-                bot.sendMessage(chatId, "❌ No encontrado");
-                return;
-            }
+        const row = db.prepare(
+            "SELECT * FROM books WHERE id = ?"
+        ).get(id);
 
-            bot.sendDocument(
-                chatId, 
-                fs.createReadStream(row.preview)
-            );;
-        });
+        if (!row) {
+            bot.sendMessage(chatId, "❌ No encontrado");
+            return;
+        }
+
+        bot.sendDocument(
+            chatId,
+            fs.createReadStream(row.preview)
+        );
     }
 
-    // 🔓 LIBRO COMPLETO (solo premium)
+    // 🔓 LIBRO COMPLETO
     if (data.startsWith("full_")) {
+
         const id = data.split("_")[1];
 
-        db.get(
-            "SELECT * FROM users WHERE telegram_id = ?",
-            [chatId],
-            (err, user) => {
+        const user = db.prepare(
+            "SELECT * FROM users WHERE telegram_id = ?"
+        ).get(chatId);
 
-                if (!user || user.premium == 0) {
-                    bot.sendMessage(chatId, "🔒 Solo disponible para usuarios premium");
-                    return;
-                }
+        if (!user || user.premium == 0) {
+            bot.sendMessage(chatId, "🔒 Solo disponible para usuarios premium");
+            return;
+        }
 
-                db.get("SELECT * FROM books WHERE id = ?", [id], (err, row) => {
-                    if (!row) {
-                        bot.sendMessage(chatId, "❌ Libro no encontrado");
-                        return;
-                    }
+        const row = db.prepare(
+            "SELECT * FROM books WHERE id = ?"
+        ).get(id);
 
-                    bot.sendDocument(
-                        chatId,
-                    fs.createReadStream(row.archivo)
-                    );
-                });
-            }
+        if (!row) {
+            bot.sendMessage(chatId, "❌ Libro no encontrado");
+            return;
+        }
+
+        bot.sendDocument(
+            chatId,
+            fs.createReadStream(row.archivo)
         );
     }
 });
 
-// 💰 COMANDO PREMIUM (simple por ahora)
+// 💰 PREMIUM
 bot.onText(/\/premium/, (msg) => {
+
     const chatId = msg.chat.id;
 
     bot.sendMessage(chatId, `
@@ -275,3 +251,5 @@ bot.on('message', (msg) => {
         );
     }
 });
+
+console.log("🤖 Bot online");
