@@ -1,10 +1,26 @@
 require('dotenv').config();
+
+const https = require('https');
+
+// limpia webhook viejo
+https.get(`https://api.telegram.org/bot${process.env.TOKEN}/deleteWebhook`);
+
 const TelegramBot = require('node-telegram-bot-api');
 const Database = require('better-sqlite3');
 const fs = require('fs');
 
 // Inicializar bot
-const bot = new TelegramBot(process.env.TOKEN, { polling: true });
+const bot = new TelegramBot(process.env.TOKEN, {
+    polling: {
+        autoStart: true,
+        interval: 300
+    }
+});
+
+// errores reales
+bot.on("polling_error", (err) => {
+    console.log("Polling error:", err.message);
+});
 
 // Base de datos
 const db = new Database('./db/database.db');
